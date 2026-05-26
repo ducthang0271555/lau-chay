@@ -4,12 +4,12 @@ After=network.target
 
 [Service]
 # Sau này thay YOUR_USER bằng user trên VPS
-User=YOUR_USER
+User=ducthang
 Group=www-data
-WorkingDirectory=/home/YOUR_USER/Projects/QuickOrder/server
-Environment="PATH=/home/YOUR_USER/Projects/QuickOrder/server/venv/bin"
+WorkingDirectory=/home/ducthang/Projects/QuickOrder/server
+Environment="PATH=/home/ducthang/Projects/QuickOrder/server/venv/bin"
 # Chạy Gunicorn với file config đã tạo ở bước 2
-ExecStart=/home/YOUR_USER/Projects/QuickOrder/server/venv/bin/gunicorn -c gunicorn.conf.py run:app
+ExecStart=/home/ducthang/Projects/QuickOrder/server/venv/bin/gunicorn -c gunicorn.conf.py run:app
 
 # Tự động khởi động lại nếu bị crash
 Restart=always
