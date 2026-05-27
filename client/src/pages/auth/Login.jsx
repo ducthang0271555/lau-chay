@@ -5,11 +5,15 @@ import userApi from "../../api/userApi.js";
 import LoadingSpinner from "../../loading-spinner/LoadingSpinner.jsx";
 
 const Login = () => {
-    const [passcode, setPasscode] = useState(new Array(6).fill(""));
+    const [passcode, setPasscode] = useState("");
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
-    const inputRefs = useRef([]);
+    const hiddenInputRef = useRef(null);
     const navigate = useNavigate();
+
+    const handleBoxClick = () => {
+        hiddenInputRef.current.focus();
+    };
 
     useEffect(() => {
         const userString = localStorage.getItem('user');
@@ -25,87 +29,69 @@ const Login = () => {
         setError("");
         try {
             const response = await userApi.login(finalPasscode);
-
             if (response.status === "success") {
                 const { user } = response;
                 localStorage.setItem('user', JSON.stringify(user));
-
                 if (user.role === 1) navigate('/admin');
                 else navigate('/order');
             }
         } catch (err) {
             const msg = err.response?.data?.message || "Mật khẩu không đúng!";
             setError(msg);
-            setPasscode(new Array(6).fill(""));
-            inputRefs.current[0].focus();
+            setPasscode("");
         } finally {
             setLoading(false);
         }
     };
 
-    const handleChange = (element, index) => {
-        const value = element.value;
-        if (isNaN(value)) return false;
-
-        const newPasscode = [...passcode];
-        newPasscode[index] = value;
-        setPasscode(newPasscode);
-
-        if (value !== "" && index < 5) {
-            inputRefs.current[index + 1].focus();
-        }
-
-        const combinedPasscode = newPasscode.join("");
-        if (combinedPasscode.length === 6) {
-            performLogin(combinedPasscode);
-        }
-    };
-
-    const handleKeyDown = (e, index) => {
-        if (e.key === "Backspace" && !passcode[index] && index > 0) {
-            inputRefs.current[index - 1].focus();
-        }
-    };
-
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        const fullPasscode = passcode.join("");
-        if (fullPasscode.length === 6) {
-            performLogin(fullPasscode);
+    const handleChange = (e) => {
+        const value = e.target.value;
+        if (/^\d*$/.test(value) && value.length <= 6) {
+            setPasscode(value);
+            if (value.length === 6) {
+                performLogin(value);
+            }
         }
     };
 
     return (
         <div className="login-container">
-            <form className="otp-Form" onSubmit={handleSubmit}>
+            <form className="otp-Form" onClick={handleBoxClick}>
                 <span className="mainHeading">Nhập mật khẩu</span>
+
+                <input
+                    ref={hiddenInputRef}
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    value={passcode}
+                    onChange={handleChange}
+                    className="hidden-input"
+                    autoFocus
+                />
+
                 <div className="inputContainer">
-                    {passcode.map((data, index) => (
-                        <input
+                    {[...Array(6)].map((_, index) => (
+                        <div
                             key={index}
-                            type="password"
-                            className="otp-input"
-                            maxLength="1"
-                            value={data}
-                            disabled={loading}
-                            ref={(el) => (inputRefs.current[index] = el)}
-                            onChange={(e) => handleChange(e.target, index)}
-                            onKeyDown={(e) => handleKeyDown(e, index)}
-                            required
-                        />
+                            className={`otp-box ${passcode.length === index ? 'active' : ''}`}
+                        >
+                            {passcode[index] ? '●' : ''}
+                        </div>
                     ))}
                 </div>
 
                 {loading ? (
-                    <LoadingSpinner/>
+                    <LoadingSpinner />
                 ) : (
                     error && <p className="error-msg">{error}</p>
                 )}
 
                 <button
                     className="verifyButton"
-                    type="submit"
-                    disabled={loading || passcode.join("").length < 6}
+                    type="button"
+                    disabled={loading || passcode.length < 6}
+                    onClick={() => performLogin(passcode)}
                 >
                     {loading ? "Đang xử lý..." : "Đăng nhập"}
                 </button>
